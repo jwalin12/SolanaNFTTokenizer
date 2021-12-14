@@ -4,21 +4,25 @@ use anchor_spl::token::{self, Burn, MintTo, SetAuthority, Transfer};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+// TODO: figure out how NFTs work on Solana
+
 #[program]
 pub mod solana_nft_tokenizer {
     use super::*;
 
-    pub fn initialize_vault(ctx: Context<InitializeVault>, owner: PubKey) -> ProgramResult {
+    pub fn initialize_vault(ctx: Context<InitializeVault>, owner: PubKey, name: String) -> ProgramResult {
         let vault_account = &mut ctx.accounts.vault_account;
         vault_account.mint_fee = ctx.mint_fee;
         vault_account.owner = owner;
-        vault_account.NFT_mint = ctx.NFT_mint;
+        vault_account.NFT_mint = ctx.NFT_mint.to_account_info;
+        vault_account.name = name;
         vault_account.vault_mint = ctx.vault_mint.to_account_info;
-        vault_account.
         Ok(())
     }
 
     pub fn mint_SPL_tokens(ctx: Context<MintSPLTokens>) -> ProgramResult {
+        let 
+
         Ok(())
 
     }
@@ -58,6 +62,7 @@ pub struct VaultAccount {
     pub mint_fee: uint64,
     pub owner: PubKey,
     pub vault_mint: AccountInfo<'info>,
+    pub name: String,
     pub NFT_mint: AccountInfo<'info>,
 
 }
