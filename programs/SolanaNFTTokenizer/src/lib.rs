@@ -49,10 +49,7 @@ pub mod solana_nft_tokenizer {
             Err(ErrorCode::IncorrectDepositorError.into());
         }
 
-        //initialize token account in vault
-        create_associated_token_account 
-        
-
+    
         //transfer NFT to vault_account and store NFT mint
 
         anchor_spl::token::transfer(
@@ -62,7 +59,7 @@ pub mod solana_nft_tokenizer {
                     from: ctx
                         .accounts
                         .depositer,
-                    to: vault_account //TODO: this should be vault_account's token account
+                    to: ctx.accounts.NFT_account //TODO: this should be vault_account's token account
                         .to_account_info(),
                     authority: ctx
                     .accounts
@@ -72,11 +69,25 @@ pub mod solana_nft_tokenizer {
             1,
         );
 
+        vault_account.NFTs_accounts.push(ctx.accounts.NFT_account //TODO: this should be vault_account's token account
+        .to_account_info());
+
+
+
 
         //mint 1000 tokens from the vault
-
-        
-
+        anchor_spl::token::mint(
+            CpiContext::new(
+                ctx.accounts.NFT_mint.to_account_info(),
+                anchor_spl::token::Mint {
+                    mint: vault_account.vault_mint,
+                    to: ctx.accounts.depositer.to_account_info,
+                    authority: vault_account.to_account_info,
+                },
+            ),
+            1000,
+        );
+    
         Ok(());
 
     }
@@ -117,7 +128,7 @@ pub mod solana_nft_tokenizer {
         pub vault_name: String,
         pub NFT_creators: <Vec<Creator>>,
         pub NFT_symbol: String,
-        pub NFTs_in_vault: <Vec<PubKey>>
+        pub NFTs_accounts: <Vec<AccountInfo<'info>>>
 
     }
 
@@ -126,7 +137,12 @@ pub mod solana_nft_tokenizer {
         pub user: Signer<'info>,
         pub depositer: AccountInfo<'info>,
         pub vault: Account<'info, VaultAccount>,
-        pub NFT_mint: Account<'info, TokenAccount>,
+        #[account(init,
+            payer = user,
+            token::mint = NFT_mint,
+            token::authority = vault)]
+        pub NFT_account: Account<'info, TokenAccount>,
+        pub NFT_mint: Account<'info, Mint>,
         
     }
 
