@@ -2,3 +2,6 @@
 members = [
     "programs/*"
 ]
+
+anchor-spl = "0.17.0"
+spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
