@@ -44,12 +44,33 @@ pub mod solana_nft_tokenizer {
         let NFT_mint = ctx.accounts.NFT_mint;
         let tokenizer_pda = PubKey::find_program_address(&[program_id, NFT_mint.PubKey], &program_id)
         //approve tokenizer to transfer NFT
-        approve()
 
+        if (ctx.accounts.user.PubKey != ctx.depositer.PubKey) {
+            Err(ErrorCode::IncorrectDepositorError.into());
+        }
 
         //initialize token account in vault
+        create_associated_token_account 
+        
 
         //transfer NFT to vault_account and store NFT mint
+
+        anchor_spl::token::transfer(
+            CpiContext::new(
+                ctx.accounts.NFT_mint.to_account_info(),
+                anchor_spl::token::Transfer {
+                    from: ctx
+                        .accounts
+                        .depositer,
+                    to: vault_account
+                        .to_account_info(),
+                    authority: ctx
+                    .accounts
+                    .depositer,
+                },
+            ),
+            1,
+        );
 
 
         //mint 1000 tokens from the vault
@@ -103,6 +124,7 @@ pub mod solana_nft_tokenizer {
     #[derive(Accounts)]
     pub struct MintSPLTokens {
         pub user: Signer<'info>,
+        pub depositer: AccountInfo<'info>,
         pub vault: Account<'info, VaultAccount>,
         pub NFT_mint: Account<'info, TokenAccount>,
         
@@ -122,6 +144,8 @@ pub mod solana_nft_tokenizer {
         IncorrectNFTCreatorsError,
         #[msg("Incorrect NFT for vault, wrong symbol")]
         IncorrectNFTSymbolError,
+        #[msg("Signer is not depositor")]
+        IncorrectDepositorError,
     }
 
 }
