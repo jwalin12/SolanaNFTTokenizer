@@ -62,7 +62,7 @@ pub mod solana_nft_tokenizer {
                     from: ctx
                         .accounts
                         .depositer,
-                    to: vault_account
+                    to: vault_account //TODO: this should be vault_account's token account
                         .to_account_info(),
                     authority: ctx
                     .accounts
