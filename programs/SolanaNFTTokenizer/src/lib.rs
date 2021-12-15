@@ -6,6 +6,7 @@ use metaplex_token_metadata::state::*;
 
 use std::vec;
 
+
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 
@@ -14,9 +15,7 @@ pub mod solana_nft_tokenizer {
    
     use super::*;
 
-    const metadata_program_id:Pubkey= Pubkey::new("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s".as_bytes());
-    const program_id: Pubkey = Pubkey::new("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS".as_bytes());
-
+    
     pub fn initialize_vault(ctx: Context<InitializeVault>, authority: Pubkey, vault_name: String, NFT_creators: Vec<Creator>, NFT_symbol: String, mint_fee: u64) -> ProgramResult {
         let vault_account = &mut ctx.accounts.vault_account;
         vault_account.mint_fee = mint_fee;
@@ -28,8 +27,11 @@ pub mod solana_nft_tokenizer {
         Ok(())
     }
 
-    pub fn mint_SPL_tokens(ctx: Context<MintSPLTokens>, ) -> ProgramResult {
+    pub fn mint_SPL_tokens(ctx: Context<MintSPLTokens>) -> ProgramResult {
         let vault_account = &mut ctx.accounts.vault_account;
+
+        let metadata_program_id = Pubkey::new("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s".as_bytes());
+
         let (metadata_pda,_) = Pubkey::find_program_address(&[
             PREFIX.as_bytes(),
             metadata_program_id.as_ref(),
@@ -59,50 +61,56 @@ pub mod solana_nft_tokenizer {
         };
 
 
-        let NFT_mint = ctx.accounts.NFT_mint;
-        let tokenizer_pda = Pubkey::find_program_address(&[program_id.as_ref(), NFT_mint.key().as_ref()], &program_id);
+        let NFT_mint = &ctx.accounts.NFT_mint;
+        let tokenizer_pda = Pubkey::find_program_address(&[ctx.program_id.as_ref(), NFT_mint.key().as_ref()], ctx.program_id);
         //approve tokenizer to transfer NFT
 
-        if (ctx.accounts.user.key != ctx.accounts.depositer.key) {
-            return Err(ErrorCode::IncorrectDepositorError.into());
-        }
-
-        if(*ctx.accounts.vault_mint.key != vault_account.vault_mint) {
+        if(ctx.accounts.vault_mint.key() != vault_account.vault_mint) {
             return Err(ErrorCode::IncorrectVaultMint.into());
         }
 
         //transfer NFT to vault_account and store NFT mint
-        anchor_spl::token::transfer(
+        let transfer_res = anchor_spl::token::transfer(
             CpiContext::new(
                 ctx.accounts.NFT_mint.to_account_info(),
                 anchor_spl::token::Transfer {
                     from: ctx
                         .accounts
-                        .depositer,
+                        .user.to_account_info(),
                     to: ctx.accounts.NFT_account //TODO: this should be vault_account's token account
                         .to_account_info(),
                     authority: ctx
                     .accounts
-                    .depositer,
+                    .user.to_account_info(),
                 },
             ),
             1,
         );
 
+        if (transfer_res.is_err()){
+            return Err(transfer_res.err().unwrap().into());
+
+        }
+
         vault_account.NFTs_accounts.push(ctx.accounts.NFT_account //TODO: this should be vault_account's token account
         .key());
         //mint 1000 tokens from the vault
-        mint_to(
+        let mint_res = mint_to(
             CpiContext::new(
                 ctx.accounts.NFT_mint.to_account_info(),
                 anchor_spl::token::MintTo {
-                    mint: ctx.accounts.vault_mint,
-                    to: ctx.accounts.depositer.to_account_info(),
+                    mint: ctx.accounts.vault_mint.to_account_info(),
+                    to: ctx.accounts.user.to_account_info(),
                     authority: vault_account.to_account_info(),
                 },
             ),
             1000,
         );
+
+        if (mint_res.is_err()) {
+            return Err(mint_res.err().unwrap().into());
+
+        }
     
         Ok(())
 
@@ -154,9 +162,8 @@ pub mod solana_nft_tokenizer {
     #[derive(Accounts)]
     pub struct MintSPLTokens<'info> {
         pub user: Signer<'info>,
-        pub depositer: AccountInfo<'info>,
         pub vault_account: Account<'info, VaultAccount>,
-        pub vault_mint: AccountInfo<'info>,
+        pub vault_mint: Account<'info, Mint>,
         pub NFT_metadata_account: AccountInfo<'info>,
         #[account(init,
             payer = user,
