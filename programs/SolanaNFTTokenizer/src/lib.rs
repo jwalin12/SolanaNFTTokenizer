@@ -37,13 +37,12 @@ pub mod solana_nft_tokenizer {
         ], &metadata_program_id );
 
         if (metadata_pda != *ctx.accounts.NFT_metadata_account.key) {
-            Err(ErrorCode::IncorrectNFTMetadata.into());
+            return Err(ErrorCode::IncorrectNFTMetadata.into());
         }
-        let metadata = Metadata::from_account_info(&ctx.accounts.NFT_metadata_account).ok().unwrap_unchecked();
+        let metadata= Metadata::from_account_info(&ctx.accounts.NFT_metadata_account)?;
     
-
         if (metadata.mint != ctx.accounts.NFT_mint.key()) {
-            Err(ErrorCode::IncorrectNFTMintError.into());
+            return Err(ErrorCode::IncorrectNFTMintError.into());
         }
 
         let data = metadata.data;
@@ -51,22 +50,25 @@ pub mod solana_nft_tokenizer {
         
 
         if (data.symbol != vault_account.NFT_symbol ) {
-            Err(ErrorCode::IncorrectNFTSymbolError.into());
+            return Err(ErrorCode::IncorrectNFTSymbolError.into());
         };
 
-        if (data.creators != vault_account.NFT_creators ) {
-            Err(ErrorCode::IncorrectNFTCreatorsError.into());
+
+        if (data.creators.unwrap_or(Vec::new()) != vault_account.NFT_creators) {
+            return Err(ErrorCode::IncorrectNFTCreatorsError.into());
         };
+
+
         let NFT_mint = ctx.accounts.NFT_mint;
         let tokenizer_pda = Pubkey::find_program_address(&[program_id.as_ref(), NFT_mint.key().as_ref()], &program_id);
         //approve tokenizer to transfer NFT
 
         if (ctx.accounts.user.key != ctx.accounts.depositer.key) {
-            Err(ErrorCode::IncorrectDepositorError.into());
+            return Err(ErrorCode::IncorrectDepositorError.into());
         }
 
         if(*ctx.accounts.vault_mint.key != vault_account.vault_mint) {
-            Err(ErrorCode::IncorrectVaultMint.into());
+            return Err(ErrorCode::IncorrectVaultMint.into());
         }
 
         //transfer NFT to vault_account and store NFT mint
