@@ -4,5 +4,3 @@ members = [
 ]
 
 anchor-spl = "0.17.0"
-spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
-metaplex_token_metadata = { version = "0.0.1", features = ["no-entrypoint"] }
