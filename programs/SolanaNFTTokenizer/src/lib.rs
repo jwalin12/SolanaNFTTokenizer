@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, MintTo,Mint, SetAuthority, Transfer,TokenAccount, Token, mint_to};
 
 use metaplex_token_metadata::state::*;
-
+use anchor_lang::solana_program;
 use std::vec;
 
 
@@ -112,7 +112,7 @@ pub mod solana_nft_tokenizer {
         let mint_res = mint_to(
             CpiContext::new(
                 ctx.accounts.nft_mint.to_account_info(),
-                anchor_spl::token::MintTo {
+                MintTo {
                     mint: ctx.accounts.vault_mint.to_account_info(),
                     to: ctx.accounts.user.to_account_info(),
                     authority: vault_account.to_account_info(),
@@ -124,7 +124,7 @@ pub mod solana_nft_tokenizer {
         let mint_res = mint_to(
             CpiContext::new(
                 ctx.accounts.nft_mint.to_account_info(),
-                anchor_spl::token::MintTo {
+                MintTo {
                     mint: ctx.accounts.vault_mint.to_account_info(),
                     to: ctx.accounts.vault_authority.to_account_info(),
                     authority: vault_account.to_account_info(),
@@ -144,7 +144,6 @@ pub mod solana_nft_tokenizer {
 
 }
 
-
     // pub fn exchange_tokens_for_nft(ctx: Context<ExchangeTokensFornft>) -> ProgramResult {
     //     Ok(())
 
@@ -157,18 +156,19 @@ pub mod solana_nft_tokenizer {
 
 
     #[derive(Accounts)]
-    #[instruction(_mint_bump: u8)]
+    #[instruction(mint_bump:u8)]
     pub struct InitializeVault<'info> {
-        #[account(init, payer = authority, space = 64+64)]
+        #[account(init, payer = authority, space = 8 + 8 +32+32+256+256+256+256)]
         pub vault_account: Account<'info, VaultAccount>,
         #[account(mut)]
         pub authority: Signer<'info>,
         #[account(init,
+            space = 8+64+64,
             payer = authority,
             mint::decimals = 16,
         mint::authority = vault_account,
         seeds = [b"mint".as_ref(), vault_account.key().as_ref()],
-        bump = _mint_bump,
+        bump = mint_bump,
         )]
         pub vault_mint: Account<'info, Mint>,
         pub rent: Sysvar<'info, Rent>,
@@ -196,7 +196,7 @@ pub mod solana_nft_tokenizer {
         pub vault_mint: Account<'info, Mint>,
         pub vault_authority: AccountInfo<'info>,
         pub nft_metadata_account: AccountInfo<'info>,
-        #[account(init,
+        #[account(init_if_needed,
             payer = user,
             token::mint = nft_mint,
             token::authority = vault_account)]

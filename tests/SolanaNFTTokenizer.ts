@@ -21,9 +21,10 @@ describe('SolanaNFTTokenizer', () => {
       program.programId
     );
     console.log(mintBump);
+    console.log(mint);
     
     // Add your test here.
-    const tx = await program.rpc.initializeVault(mintBump,"random vault",[],"RAND", new BN(1), {
+    const tx = await program.rpc.initializeVault(mintBump,"random vault",[],"RAND",new BN(1), {
       accounts: { 
         vaultAccount: vault_account.publicKey,
         authority: myAccount.publicKey,
