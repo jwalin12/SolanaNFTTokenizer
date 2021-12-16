@@ -1,5 +1,5 @@
 [programs.localnet]
-solana_nft_tokenizer = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+solana_nft_tokenizer = "4Vra8dFsZQWY7DpPJaUWBnZd4RsLN1J8LXJ28WnBFVP3"
 
 [registry]
 url = "https://anchor.projectserum.com"
