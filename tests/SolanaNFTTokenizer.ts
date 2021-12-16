@@ -17,16 +17,16 @@ describe('SolanaNFTTokenizer', () => {
 
     const vault_account = anchor.web3.Keypair.generate();
     const [mint, mintBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from("mint")],
+  [Buffer.from("mint"), vault_account.publicKey.toBuffer()],
       program.programId
     );
-    console.log(TOKEN_PROGRAM_ID);
+    console.log(mintBump);
     
     // Add your test here.
-    const tx = await program.rpc.initializeVault(myAccount.publicKey, "random vault",[],"RAND", new BN(1),mintBump, {
+    const tx = await program.rpc.initializeVault(mintBump,"random vault",[],"RAND", new BN(1), {
       accounts: { 
         vaultAccount: vault_account.publicKey,
-        vaultCreator: myAccount.publicKey,
+        authority: myAccount.publicKey,
         vaultMint: mint,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
